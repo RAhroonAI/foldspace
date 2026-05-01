@@ -1,65 +1,166 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+
+type Protein = {
+  id: string;
+  name: string | null;
+  gene: string | null;
+  organism: string | null;
+  length: number | null;
+  reviewed: boolean;
+  alphaFold: {
+    meanPlddt: number | null;
+    confidenceLabel: string;
+    available: boolean;
+  };
+  chembl: {
+    targetId: string | null;
+    approvedDrugs: string[];
+    totalCompounds: number | null;
+    available: boolean;
+  };
+  narrative: string | null;
+};
 
 export default function Home() {
+  const [input, setInput] = useState("");
+  const [protein, setProtein] = useState<Protein | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSearch() {
+    if (!input.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setProtein(null);
+
+    try {
+      const response = await fetch(`/api/uniprot?id=${input.trim()}`);
+
+      if (!response.ok) {
+        setError("Could not find that protein. Check the UniProt accession and try again.");
+        return;
+      }
+
+      const data = await response.json();
+      setProtein(data);
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen px-6 py-16">
+      <div className="max-w-2xl mx-auto">
+        <p className="text-xs text-fv-muted tracking-wide mb-3">
+          Foldspace · a Floviken experiment
+        </p>
+        <h1 className="font-serif text-4xl font-medium mb-4">Foldspace</h1>
+        <p className="text-fv-muted leading-relaxed mb-2">
+          Reading a paper, hearing about a new drug target, trying to recall what a protein does in normal physiology — clinicians often need fast context that isn&apos;t pitched at researchers.
+        </p>
+        <p className="text-fv-muted leading-relaxed mb-10">
+          Foldspace fetches live data from UniProt, AlphaFold, and ChEMBL and asks Claude to write a short clinical briefing on top of it. The facts come from databases; the language comes from Claude.
+        </p>
+
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Enter UniProt ID (e.g. P04637)"
+            className="flex-1 px-4 py-2 border border-fv-border bg-fv-card rounded text-fv-text placeholder:text-fv-muted focus:outline-none focus:border-fv-accent"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="px-5 py-2 bg-fv-text text-fv-bg rounded disabled:opacity-50 font-medium"
+          >
+            {loading ? "Loading…" : "Search"}
+          </button>
+        </div>
+        <p className="text-xs text-fv-muted mb-12">
+          Try: P04637 (TP53) · P00533 (EGFR) · P01308 (insulin) · Q8NBP7 (PCSK9)
+        </p>
+
+        {loading && (
+          <p className="text-fv-muted italic">
+            Fetching protein data, structural confidence, bioactivity, and generating briefing…
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        )}
+
+        {error && <p className="text-red-700">{error}</p>}
+
+        {protein && (
+          <div className="space-y-8">
+            <div className="border border-fv-border bg-fv-card rounded p-8">
+              <h2 className="font-serif text-2xl font-medium mb-6">{protein.name}</h2>
+              <dl className="grid grid-cols-[180px_1fr] gap-y-3 text-sm">
+                <dt className="text-fv-muted">UniProt ID</dt>
+                <dd className="font-mono">{protein.id}</dd>
+                <dt className="text-fv-muted">Gene</dt>
+                <dd className="font-mono">{protein.gene ?? "—"}</dd>
+                <dt className="text-fv-muted">Organism</dt>
+                <dd className="italic">{protein.organism ?? "—"}</dd>
+                <dt className="text-fv-muted">Length</dt>
+                <dd>{protein.length ? `${protein.length} aa` : "—"}</dd>
+                <dt className="text-fv-muted">Status</dt>
+                <dd>{protein.reviewed ? "Reviewed (Swiss-Prot)" : "Unreviewed (TrEMBL)"}</dd>
+                <dt className="text-fv-muted">Mean pLDDT</dt>
+                <dd>
+                  {protein.alphaFold.available && protein.alphaFold.meanPlddt !== null ? (
+                    <>
+                      <span className="font-mono">{protein.alphaFold.meanPlddt}</span>
+                      <span className="text-fv-muted"> · {protein.alphaFold.confidenceLabel}</span>
+                    </>
+                  ) : (
+                    <span className="text-fv-muted">Not available</span>
+                  )}
+                </dd>
+                <dt className="text-fv-muted">Approved drugs</dt>
+                <dd>
+                  {protein.chembl.available ? (
+                    protein.chembl.approvedDrugs.length > 0 ? (
+                      protein.chembl.approvedDrugs.join(", ")
+                    ) : (
+                      <span className="text-fv-muted">None known to ChEMBL</span>
+                    )
+                  ) : (
+                    <span className="text-fv-muted">Not available</span>
+                  )}
+                </dd>
+                <dt className="text-fv-muted">Bioactivity records</dt>
+                <dd>
+                  {protein.chembl.available && protein.chembl.totalCompounds !== null ? (
+                    <span className="font-mono">{protein.chembl.totalCompounds.toLocaleString()}</span>
+                  ) : (
+                    <span className="text-fv-muted">Not available</span>
+                  )}
+                </dd>
+              </dl>
+            </div>
+
+            {protein.narrative && (
+              <div className="border border-fv-border bg-fv-card rounded p-8">
+                <h3 className="font-serif text-xl font-medium mb-5">Clinical briefing</h3>
+                <div className="leading-relaxed space-y-4 text-fv-text">
+                  {protein.narrative.split("\n\n").map((paragraph, i) => (
+                    <p key={i}>{paragraph}</p>
+                  ))}
+                </div>
+                <p className="text-xs text-fv-muted mt-6 italic border-t border-fv-border pt-4">
+                  Synthesized by Claude from UniProt, AlphaFold, and ChEMBL data. Demonstration only — not a clinical decision tool.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
