@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { pdf } from "@react-pdf/renderer";
+import { BriefingPDF } from "./components/BriefingPDF";
 
 type Protein = {
   id: string;
@@ -41,6 +43,7 @@ export default function Home() {
   const [protein, setProtein] = useState<Protein | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   async function runSearch(idToSearch: string) {
     const trimmed = idToSearch.trim();
@@ -74,6 +77,28 @@ export default function Home() {
   function handleChipClick(target: { gene: string; id: string }) {
     setInput(target.id);
     runSearch(target.id);
+  }
+
+  async function handleDownload() {
+    if (!protein) return;
+    setDownloading(true);
+
+    try {
+      const blob = await pdf(<BriefingPDF protein={protein} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `foldspace-${protein.gene ?? protein.id}-${protein.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      setError("Could not generate the PDF. Try again.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -194,6 +219,16 @@ export default function Home() {
                 </p>
               </div>
             )}
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className="px-4 py-2 text-sm border border-fv-border bg-fv-card rounded hover:border-fv-accent hover:text-fv-accent transition-colors disabled:opacity-50"
+              >
+                {downloading ? "Generating PDF…" : "Download briefing (PDF)"}
+              </button>
+            </div>
           </div>
         )}
       </div>
