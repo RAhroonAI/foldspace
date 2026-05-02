@@ -107,12 +107,26 @@ export default function Home() {
         <p className="text-xs text-fv-muted tracking-wide mb-3">
           Foldspace · a Floviken experiment
         </p>
-        <h1 className="font-serif text-4xl font-medium mb-4">Foldspace</h1>
-        <p className="text-fv-muted leading-relaxed mb-2">
-          Reading a paper, hearing about a new drug target, trying to recall what a protein does in normal physiology — clinicians often need fast context that isn&apos;t pitched at researchers.
+        <h1 className="font-serif text-4xl font-medium mb-8">Foldspace</h1>
+
+        <p className="text-fv-muted leading-relaxed mb-4">
+          Foldspace is an experiment in data integrity, run in one specific corner: molecular biology, protein folding, and drug targets. AlphaFold has computed predicted structures for nearly every known protein. UniProt has curated the functional annotations. ChEMBL has logged decades of bioactivity data. The raw material is open, free, and current.
         </p>
-        <p className="text-fv-muted leading-relaxed mb-10">
-          Foldspace fetches live data from UniProt, AlphaFold, and ChEMBL and asks Claude to write a short clinical briefing on top of it. The facts come from databases; the language comes from Claude.
+
+        <p className="text-fv-muted leading-relaxed mb-4">
+          Type a UniProt ID. In 60 seconds, Foldspace returns a one-page clinical briefing — protein function, clinical relevance, approved drugs, structural confidence — assembled from UniProt, AlphaFold, and ChEMBL, fetched live every time. The briefing is downloadable as a PDF.
+        </p>
+
+        <p className="text-fv-muted leading-relaxed mb-4">
+          Rather than a clinician asking a chat model what it knows about a protein, this approach verifies the underlying data first and asks the model to write the clinical context around what&apos;s actually there. The model isn&apos;t the source. It&apos;s the translator.
+        </p>
+
+        <p className="text-fv-muted leading-relaxed mb-4">
+          AI synthesizes the language. The model is never asked to remember. It is told.
+        </p>
+
+        <p className="text-fv-muted leading-relaxed mb-10 italic">
+          Foldspace isn&apos;t intended for clinical use. It&apos;s a thought experiment — one small attempt to work through what data integrity might look like as AI enters clinical workflows.
         </p>
 
         <div className="flex gap-2 mb-6">
@@ -215,7 +229,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-xs text-fv-muted mt-6 italic border-t border-fv-border pt-4">
-                  Synthesized by Claude from UniProt, AlphaFold, and ChEMBL data. Demonstration only — not a clinical decision tool.
+                  Synthesized by AI over UniProt, AlphaFold, and ChEMBL data. Demonstration only — not a clinical decision tool.
                 </p>
               </div>
             )}
