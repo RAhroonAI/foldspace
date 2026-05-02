@@ -23,21 +23,35 @@ type Protein = {
   narrative: string | null;
 };
 
+const PRESET_TARGETS: { gene: string; id: string }[] = [
+  { gene: "TP53", id: "P04637" },
+  { gene: "EGFR", id: "P00533" },
+  { gene: "KRAS", id: "P01116" },
+  { gene: "BRCA1", id: "P38398" },
+  { gene: "INS", id: "P01308" },
+  { gene: "HBB", id: "P68871" },
+  { gene: "PCSK9", id: "Q8NBP7" },
+  { gene: "GLP1R", id: "P43220" },
+  { gene: "BTK", id: "Q06187" },
+  { gene: "JAK2", id: "O60674" },
+];
+
 export default function Home() {
   const [input, setInput] = useState("");
   const [protein, setProtein] = useState<Protein | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSearch() {
-    if (!input.trim()) return;
+  async function runSearch(idToSearch: string) {
+    const trimmed = idToSearch.trim();
+    if (!trimmed) return;
 
     setLoading(true);
     setError(null);
     setProtein(null);
 
     try {
-      const response = await fetch(`/api/uniprot?id=${input.trim()}`);
+      const response = await fetch(`/api/uniprot?id=${trimmed}`);
 
       if (!response.ok) {
         setError("Could not find that protein. Check the UniProt accession and try again.");
@@ -51,6 +65,15 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleManualSearch() {
+    runSearch(input);
+  }
+
+  function handleChipClick(target: { gene: string; id: string }) {
+    setInput(target.id);
+    runSearch(target.id);
   }
 
   return (
@@ -67,26 +90,39 @@ export default function Home() {
           Foldspace fetches live data from UniProt, AlphaFold, and ChEMBL and asks Claude to write a short clinical briefing on top of it. The facts come from databases; the language comes from Claude.
         </p>
 
-        <div className="flex gap-2 mb-3">
+        <div className="flex gap-2 mb-6">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
             placeholder="Enter UniProt ID (e.g. P04637)"
             className="flex-1 px-4 py-2 border border-fv-border bg-fv-card rounded text-fv-text placeholder:text-fv-muted focus:outline-none focus:border-fv-accent"
           />
           <button
-            onClick={handleSearch}
+            onClick={handleManualSearch}
             disabled={loading}
             className="px-5 py-2 bg-fv-text text-fv-bg rounded disabled:opacity-50 font-medium"
           >
             {loading ? "Loading…" : "Search"}
           </button>
         </div>
-        <p className="text-xs text-fv-muted mb-12">
-          Try: P04637 (TP53) · P00533 (EGFR) · P01308 (insulin) · Q8NBP7 (PCSK9)
-        </p>
+
+        <div className="mb-12">
+          <p className="text-xs text-fv-muted tracking-wide mb-3">Common targets</p>
+          <div className="flex flex-wrap gap-2">
+            {PRESET_TARGETS.map((target) => (
+              <button
+                key={target.id}
+                onClick={() => handleChipClick(target)}
+                disabled={loading}
+                className="px-3 py-1.5 text-sm font-mono border border-fv-border bg-fv-card rounded hover:border-fv-accent hover:text-fv-accent transition-colors disabled:opacity-50"
+              >
+                {target.gene}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {loading && (
           <p className="text-fv-muted italic">
